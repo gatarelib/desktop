@@ -13,7 +13,7 @@ import detectPort from "detect-port"
 import express from "express"
 import serveStatic from "serve-static"
 import fixPath from "fix-path"
-
+import { autoUpdater } from "electron-updater"
 import {
   hasGatsbyInstalled,
   loadPackageJson,
@@ -22,6 +22,7 @@ import {
 import { watchSites, stopWatching, ISiteMetadata } from "./site-watcher"
 import { SiteLauncher, Message } from "./launcher"
 import { Status, LogObject, SiteError } from "./ipc-types"
+import log from "electron-log"
 interface ISiteStatus {
   startedInDesktop?: boolean
   status: Status
@@ -46,6 +47,9 @@ function makeWindow(): BrowserWindow {
 }
 
 async function start(): Promise<void> {
+  log.transports.file.level = `info`
+  autoUpdater.logger = log
+  log.info(`App starting...`)
   fixPath()
   /**
    * Start a static server to serve the app's resources.
@@ -88,6 +92,7 @@ async function start(): Promise<void> {
   let tray: Tray | undefined
 
   app.on(`ready`, () => {
+    autoUpdater.checkForUpdatesAndNotify()
     mainWindow = makeWindow()
 
     tray = new Tray(path.resolve(dir, `assets`, `IconTemplate.png`))
